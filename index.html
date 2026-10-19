@@ -953,128 +953,46 @@
        3. WEB AUDIO ROMANTIC MUSIC BOX SYNTHESIZER
        ======================================================== */
     let audioCtx = null;
-    let isMusicPlaying = true;
+    let isMusicPlaying = flase;
     let melodyTimer = null;
 
     // Peaceful Romantic Music Box Sequence in D Major (Canon / Nocturne vibe)
     const romanticChords = [
-      // "Happy Birthday to you"
-  { note: "G4", duration: 0.35, pause: 0.1 },
-  { note: "G4", duration: 0.15, pause: 0.05 },
-  { note: "A4", duration: 0.5,  pause: 0.1 },
-  { note: "G4", duration: 0.5,  pause: 0.1 },
-  { note: "C5", duration: 0.5,  pause: 0.1 },
-  { note: "B4", duration: 1.0,  pause: 0.3 },
+        587.33, // D5
+      440.00, // A4
+      493.88, // B4
+      369.99, // F#4
+      392.00, // G4
+      587.33, // D5
+      392.00, // G4
+      440.00, // A4
+      659.25, // E5
+      739.99, // F#5
+      587.33, // D5
+      440.00  // A4
+    ];
+    let noteStep = 0;
 
-  // "Happy Birthday to you"
-  { note: "G4", duration: 0.35, pause: 0.1 },
-  { note: "G4", duration: 0.15, pause: 0.05 },
-  { note: "A4", duration: 0.5,  pause: 0.1 },
-  { note: "G4", duration: 0.5,  pause: 0.1 },
-  { note: "D5", duration: 0.5,  pause: 0.1 },
-  { note: "C5", duration: 1.0,  pause: 0.3 },
+    function initAudioContext() {
+      if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContext();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
 
-  // "Happy Birthday dear Anjali"
-  { note: "G4", duration: 0.35, pause: 0.1 },
-  { note: "G4", duration: 0.15, pause: 0.05 },
-  { note: "G5", duration: 0.5,  pause: 0.1 },
-  { note: "E5", duration: 0.5,  pause: 0.1 },
-  { note: "C5", duration: 0.5,  pause: 0.1 },
-  { note: "B4", duration: 0.5,  pause: 0.1 },
-  { note: "A4", duration: 1.0,  pause: 0.3 },
+    // High clarity, pure sine bell note with soft harmonic overtone
+    function playMusicBoxChime(freq, duration = 1.6, vol = 0.08) {
+      if (!audioCtx) return;
+      try {
+        const osc = audioCtx.createOscillator();
+        const oscOvertone = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
 
-  // "Happy Birthday to you!"
-  { note: "F5", duration: 0.35, pause: 0.1 },
-  { note: "F5", duration: 0.15, pause: 0.05 },
-  { note: "E5", duration: 0.5,  pause: 0.1 },
-  { note: "C5", duration: 0.5,  pause: 0.1 },
-  { note: "D5", duration: 0.5,  pause: 0.1 },
-  { note: "C5", duration: 1.2,  pause: 1.5 } // loops after pause
-];
-
-// Note frequencies in Hz
-const noteFrequencies = {
-  "G4": 392.00,
-  "A4": 440.00,
-  "B4": 493.88,
-  "C5": 523.25,
-  "D5": 587.33,
-  "E5": 659.25,
-  "F5": 698.46,
-  "G5": 783.99
-};
-
-function playTone(freq, duration) {
-  if (!audioCtx) return;
-
-  const osc = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
-
-  // Sine wave gives a soft chime/music-box feel
-  osc.type = "sine";
-  osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-
-  // Soft fade in & ringing bell fade out
-  gain.gain.setValueAtTime(0.001, audioCtx.currentTime);
-  gain.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + 0.04);
-  gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
-
-  osc.connect(gain);
-  gain.connect(audioCtx.destination);
-
-  osc.start();
-  osc.stop(audioCtx.currentTime + duration);
-}
-
-function playMelodyStep(index = 0) {
-  if (!isMusicPlaying) return;
-
-  if (index >= birthdayNotes.length) {
-    // Loop the melody gently
-    melodyTimeout = setTimeout(() => playMelodyStep(0), 1000);
-    return;
-  }
-
-  const item = birthdayNotes[index];
-  const freq = noteFrequencies[item.note];
-  if (freq) {
-    playTone(freq, item.duration);
-  }
-
-  const delay = (item.duration + item.pause) * 1000;
-  melodyTimeout = setTimeout(() => {
-    playMelodyStep(index + 1);
-  }, delay);
-}
-
-function toggleBirthdayMusic() {
-  if (!audioCtx) {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  }
-
-  if (audioCtx.state === 'suspended') {
-    audioCtx.resume();
-  }
-
-  isMusicPlaying = !isMusicPlaying;
-  const musicBtn = document.getElementById("music-toggle-btn");
-
-  if (isMusicPlaying) {
-    if (musicBtn) musicBtn.innerHTML = '🎵 Pause Melody';
-    playMelodyStep(0);
-  } else {
-    if (musicBtn) musicBtn.innerHTML = '🎵 Play Birthday Melody';
-    clearTimeout(melodyTimeout);
-  }
-}
-
-// Auto-start on Anjali's first touch/click (browsers require 1 user tap before audio plays)
-document.addEventListener('click', function initAudioOnTouch() {
-  if (!isMusicPlaying) {
-    toggleBirthdayMusic();
-  }
-  document.removeEventListener('click', initAudioOnTouch);
-}, { once: true });
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
 
         // Overtone 2 octaves above for tinkling bell sound
         oscOvertone.type = 'sine';
